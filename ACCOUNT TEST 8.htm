@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Agency Accounting Pro</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+  <style>
+    body { padding-top: 60px; background: #f8f9fa; }
+    .navbar { background: linear-gradient(135deg, #007bff, #0056b3); }
+    .section { display: none; }
+    .active-section { display: block; }
+    .required:after { content: "*"; color: red; margin-left: 3px; }
+    .dashboard-card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#" onclick="showSection('dashboard')">
+        <i class="fas fa-plane me-2"></i> Akash Travel Agency
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showSection('dashboard')">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showSection('sales-entry')">Sales Entry</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showSection('reports')">Reports</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showSection('admin')">Admin Panel</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Dashboard -->
+  <div class="container mt-5 section active-section" id="dashboard">
+    <h2 class="text-primary mb-4">Sales Overview</h2>
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="dashboard-card">
+          <h6>Total Sales</h6>
+          <p class="h3 mb-0" id="total-sales">₹0.00</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="dashboard-card">
+          <h6>Total Investment</h6>
+          <p class="h3 mb-0" id="total-investment">₹0.00</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="dashboard-card">
+          <h6>Net Profit</h6>
+          <p class="h3 text-success mb-0" id="total-profit">₹0.00</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="dashboard-card">
+          <h6>Due Collections</h6>
+          <p class="h3 text-danger mb-0" id="due-collections">₹0.00</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-header bg-primary text-white d-flex justify-content-between">
+        <span>Recent Transactions</span>
+        <select class="form-select w-auto" id="status-filter" onchange="updateDashboard()">
+          <option value="">All Status</option>
+          <option value="Paid">Paid</option>
+          <option value="Due">Due</option>
+          <option value="Lost">Lost</option>
+        </select>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Entry Date</th>
+              <th>Travel Date</th>
+              <th>PNR</th>
+              <th>Passenger</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="recent-transactions"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sales Entry -->
+  <div class="container mt-5 section" id="sales-entry">
+    <h2 class="text-primary mb-4">New Transaction</h2>
+    <form id="sales-form" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label required">Passenger Name</label>
+        <input type="text" class="form-control" id="passenger-name" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">PNR Number</label>
+        <input type="text" class="form-control" id="pnr" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">Travelers</label>
+        <input type="number" class="form-control" id="travelers" min="1" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Mobile Number</label>
+        <input type="text" class="form-control" id="mobile">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">From Airport</label>
+        <input type="text" class="form-control" id="from-airport" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">To Airport</label>
+        <input type="text" class="form-control" id="to-airport" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">Travel Date</label>
+        <input type="date" class="form-control" id="travel-date" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">Entry Date</label>
+        <input type="date" class="form-control" id="entry-date" value="<?= date('Y-m-d') ?>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">Flight Code</label>
+        <input type="text" class="form-control" id="flight-code" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">Buying Amount</label>
+        <input type="number" step="0.01" class="form-control" id="buying-amount" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">Selling Price</label>
+        <input type="number" step="0.01" class="form-control" id="selling-price" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">Payment Mode</label>
+        <select class="form-select" id="payment-mode" required onchange="toggleCollectionDate()">
+          <option value="">Select Mode</option>
+          <option value="Paid">Paid</option>
+          <option value="Due">Due</option>
+          <option value="Cash">Cash</option>
+          <option value="Online">Online</option>
+          <option value="GPay">GPay</option>
+          <option value="PhonePe">PhonePe</option>
+          <option value="Lost">Lost</option>
+        </select>
+      </div>
+      <div class="col-md-6" id="collection-date-group" style="display: none;">
+        <label class="form-label required">Collection Date</label>
+        <input type="date" class="form-control" id="collection-date">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">Supplier Name</label>
+        <input type="text" class="form-control" id="supplier" required>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Save Transaction</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Reports -->
+  <div class="container mt-5 section" id="reports">
+    <h2 class="text-primary mb-4">Financial Reports</h2>
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <button class="btn btn-outline-secondary w-100" onclick="setDateRange('today')">Today</button>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-outline-secondary w-100" onclick="setDateRange('month')">This Month</button>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-outline-secondary w-100" onclick="setDateRange('year')">This Year</button>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-success w-100" onclick="generateReport()">Generate Report</button>
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <input type="date" class="form-control" id="report-from">
+      </div>
+      <div class="col-md-6">
+        <input type="date" class="form-control" id="report-to">
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead class="table-primary">
+          <tr>
+            <th>Entry Date</th>
+            <th>Travel Date</th>
+            <th>PNR</th>
+            <th>Passenger</th>
+            <th>Supplier</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Profit</th>
+          </tr>
+        </thead>
+        <tbody id="report-table"></tbody>
+      </table>
+    </div>
+    <div class="text-center mt-3">
+      <button class="btn btn-success me-3" onclick="exportToExcel()">Excel</button>
+      <button class="btn btn-danger" onclick="exportToPDF()">PDF</button>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div class="container mt-5 section" id="admin">
+    <h2 class="text-primary mb-4">Administration</h2>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">Company Management</div>
+          <div class="card-body">
+            <form id="company-form" class="row g-3">
+              <div class="col-12">
+                <label class="form-label required">Company Name</label>
+                <input type="text" class="form-control" id="company-name" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Phone</label>
+                <input type="text" class="form-control" id="company-phone">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="company-email">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Address</label>
+                <textarea class="form-control" id="company-address" rows="3"></textarea>
+              </div>
+              <div class="col-12">
+                <button type="button" class="btn btn-success" onclick="saveCompany()">Update Profile</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">Existing Companies</div>
+          <div class="card-body table-responsive">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Company Name</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="company-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let sales = JSON.parse(localStorage.getItem('sales')) || [];
+    let companies = JSON.parse(localStorage.getItem('companies')) || [];
+    let editingCompanyId = null;
+
+    // Initial setup
+    updateDashboard();
+    loadCompanies();
+
+    // Section control
+    function showSection(section) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active-section'));
+      document.getElementById(section).classList.add('active-section');
+    }
+
+    // Sales Form
+    document.getElementById('sales-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const sale = {
+        id: Date.now(),
+        entryDate: document.getElementById('entry-date').value,
+        travelDate: document.getElementById('travel-date').value,
+        pnr: document.getElementById('pnr').value,
+        passenger: document.getElementById('passenger-name').value,
+        travelers: parseInt(document.getElementById('travelers').value),
+        mobile: document.getElementById('mobile').value || '-',
+        from: document.getElementById('from-airport').value,
+        to: document.getElementById('to-airport').value,
+        flightCode: document.getElementById('flight-code').value,
+        buyingAmount: parseFloat(document.getElementById('buying-amount').value),
+        sellingPrice: parseFloat(document.getElementById('selling-price').value),
+        paymentMode: document.getElementById('payment-mode').value,
+        collectionDate: document.getElementById('collection-date').value || '-',
+        supplier: document.getElementById('supplier').value,
+        profit: (document.getElementById('selling-price').value - 
+                document.getElementById('buying-amount').value).toFixed(2)
+      };
+
+      sales.push(sale);
+      localStorage.setItem('sales', JSON.stringify(sales));
+      updateDashboard();
+      this.reset();
+      toggleCollectionDate();
+      showSection('dashboard');
+    });
+
+    // Admin Panel
+    function loadCompanies() {
+      const tableBody = document.getElementById('company-table');
+      tableBody.innerHTML = companies.map(c => `
+        <tr>
+          <td>${c.name}</td>
+          <td>
+            <button class="btn btn-sm btn-primary me-2" onclick="editCompany('${c.id}')">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="deleteCompany('${c.id}')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function saveCompany() {
+      const name = document.getElementById('company-name').value;
+      const existing = companies.find(c => c.id === editingCompanyId);
+      
+      const company = {
+        id: editingCompanyId || Date.now(),
+        name: name,
+        phone: document.getElementById('company-phone').value,
+        email: document.getElementById('company-email').value,
+        address: document.getElementById('company-address').value
+      };
+
+      if(existing) {
+        companies = companies.map(c => c.id === editingCompanyId ? company : c);
+      } else {
+        companies.push(company);
+      }
+
+      localStorage.setItem('companies', JSON.stringify(companies));
+      loadCompanies();
+      document.getElementById('company-form').reset();
+      editingCompanyId = null;
+    }
+
+    function editCompany(id) {
+      const company = companies.find(c => c.id === id);
+      if (!company) return;
+
+      editingCompanyId = company.id;
+      document.getElementById('company-name').value = company.name;
+      document.getElementById('company-phone').value = company.phone;
+      document.getElementById('company-email').value = company.email;
+      document.getElementById('company-address').value = company.address;
+    }
+
+    function deleteCompany(id) {
+      if(confirm('Delete company? This will remove all associated transactions.')) {
+        companies = companies.filter(c => c.id !== id);
+        sales = sales.filter(s => s.supplier !== companies.find(co => co.id === id)?.name);
+        localStorage.setItem('companies', JSON.stringify(companies));
+        localStorage.setItem('sales', JSON.stringify(sales));
+        updateDashboard();
+        loadCompanies();
+      }
+    }
+
+    // Dashboard Update
+    function updateDashboard() {
+      const statusFilter = document.getElementById('status-filter').value;
+      const filteredSales = statusFilter 
+        ? sales.filter(s => s.paymentMode === statusFilter)
+        : sales;
+
+      document.getElementById('total-sales').textContent = 
+        filteredSales.reduce((sum, s) => sum + s.sellingPrice, 0).toFixed(2);
+        
+      document.getElementById('total-investment').textContent = 
+        filteredSales.reduce((sum, s) => sum + s.buyingAmount, 0).toFixed(2);
+        
+      document.getElementById('total-profit').textContent = 
+        filteredSales.reduce((sum, s) => sum + parseFloat(s.profit), 0).toFixed(2);
+        
+      document.getElementById('due-collections').textContent = 
+        sales.filter(s => s.paymentMode === 'Due')
+          .reduce((sum, s) => sum + s.sellingPrice, 0).toFixed(2);
+          
+      document.getElementById('lost-sales').textContent = 
+        sales.filter(s => s.paymentMode === 'Lost')
+          .reduce((sum, s) => sum + s.sellingPrice, 0).toFixed(2);
+
+      // Recent transactions
+      document.getElementById('recent-transactions').innerHTML = 
+        filteredSales.slice(-5).map(s => `
+          <tr>
+            <td>${s.entryDate}</td>
+            <td>${s.travelDate}</td>
+            <td>${s.pnr}</td>
+            <td>${s.passenger}</td>
+            <td>₹${s.sellingPrice.toFixed(2)}</td>
+            <td>${s.paymentMode}</td>
+          </tr>
+        `).join('');
+    }
+
+    // Report Generation
+    function generateReport() {
+      const from = document.getElementById('report-from').value;
+      const to = document.getElementById('report-to').value;
+      
+      const filtered = sales.filter(s => {
+        const entryDate = new Date(s.entryDate);
+        return entryDate >= new Date(from) && entryDate <= new Date(to);
+      });
+
+      document.getElementById('report-table').innerHTML = filtered.map(s => `
+        <tr>
+          <td>${s.entryDate}</td>
+          <td>${s.travelDate}</td>
+          <td>${s.pnr}</td>
+          <td>${s.passenger}</td>
+          <td>${s.supplier}</td>
+          <td>₹${s.sellingPrice.toFixed(2)}</td>
+          <td>${s.paymentMode}</td>
+          <td>₹${s.profit}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Payment mode handler
+    function toggleCollectionDate() {
+      const paymentMode = document.getElementById('payment-mode').value;
+      document.getElementById('collection-date-group').style.display = 
+        paymentMode === 'Due' ? 'block' : 'none';
+    }
+
+    // Date range shortcuts
+    function setDateRange(period) {
+      const today = new Date();
+      const fromInput = document.getElementById('report-from');
+      const toInput = document.getElementById('report-to');
+
+      switch(period) {
+        case 'today':
+          fromInput.valueAsDate = today;
+          toInput.valueAsDate = today;
+          break;
+        case 'month':
+          fromInput.valueAsDate = new Date(today.getFullYear(), today.getMonth(), 1);
+          toInput.valueAsDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+          break;
+        case 'year':
+          fromInput.valueAsDate = new Date(today.getFullYear(), 0, 1);
+          toInput.valueAsDate = new Date(today.getFullYear(), 11, 31);
+          break;
+      }
+    }
+
+    // File exports
+    function exportToExcel() {
+      const data = sales.map(s => ({
+        'Entry Date': s.entryDate,
+        'Travel Date': s.travelDate,
+        'PNR': s.pnr,
+        'Passenger': s.passenger,
+        'Supplier': s.supplier,
+        'Amount': s.sellingPrice,
+        'Status': s.paymentMode,
+        'Profit': s.profit
+      }));
+      
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Report');
+      XLSX.writeFile(wb, 'report.xlsx');
+    }
+
+    function exportToPDF() {
+      const doc = new jspdf.jsPDF();
+      doc.text('Sales Report', 10, 10);
+      
+      sales.forEach((s, i) => {
+        doc.text(
+          `${i+1}. Entry: ${s.entryDate} | Travel: ${s.travelDate} | PNR: ${s.pnr} | ${s.passenger} | ₹${s.sellingPrice}`,
+          10, 20 + (i*10)
+        );
+      });
+      
+      doc.save('report.pdf');
+    }
+  </script>
+</body>
+</html>
